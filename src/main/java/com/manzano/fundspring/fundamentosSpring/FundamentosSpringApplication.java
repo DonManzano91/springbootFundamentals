@@ -40,6 +40,7 @@ public class FundamentosSpringApplication implements CommandLineRunner {
 
 	}
 
+	//El metodo main ejecutara el especifivo run que se defina en la aplicación.
 	public static void main(String[] args) {
 		SpringApplication.run(FundamentosSpringApplication.class, args);
 	}
