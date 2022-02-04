@@ -4,13 +4,20 @@ import com.manzano.fundspring.fundamentosSpring.Bean.MyBean;
 import com.manzano.fundspring.fundamentosSpring.Bean.MyBeanWithDependency;
 import com.manzano.fundspring.fundamentosSpring.Bean.MyBeanWithProperties;
 import com.manzano.fundspring.fundamentosSpring.Component.ComponentDependency;
+import com.manzano.fundspring.fundamentosSpring.Entity.User;
 import com.manzano.fundspring.fundamentosSpring.Pojos.UserPojo;
+import com.manzano.fundspring.fundamentosSpring.Repository.UserRepository;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
+import org.springframework.data.domain.Sort;
+
+import java.time.LocalDate;
+import java.util.Arrays;
+import java.util.List;
 
 @SpringBootApplication
 public class FundamentosSpringApplication implements CommandLineRunner {
@@ -25,18 +32,25 @@ public class FundamentosSpringApplication implements CommandLineRunner {
 	private MyBeanWithProperties myBeanWithProperties;
 	private UserPojo userPojo;
 
+	/*Se inyecta el repositorio como dependencia para poder hacer uso del comportamiento db y darle persistencia a la
+	* info de tipo User*/
+	private UserRepository userRepository;
+
+
 	/*Cuando tenemos que la dependencia esta implementada en dos o mas clases/objetos/beans, se debe definir cual
 	 de esas implementaciones es la que se va a utilizar*/
 	public FundamentosSpringApplication(@Qualifier("componentImplementTwo") ComponentDependency componentDependency,
 										MyBean myBean,
 										MyBeanWithDependency myBeanWithDependency,
 										MyBeanWithProperties myBeanWithProperties,
-										UserPojo userPojo) {
+										UserPojo userPojo,
+										UserRepository userRepository) {
 		this.componentDependency = componentDependency;
 		this.myBean = myBean; //Se pasa la dependencia como parte del constructor para que se instancie el momento
 		this.myBeanWithDependency = myBeanWithDependency;
 		this.myBeanWithProperties = myBeanWithProperties;
 		this.userPojo = userPojo;
+		this.userRepository = userRepository;
 
 	}
 
@@ -49,7 +63,18 @@ public class FundamentosSpringApplication implements CommandLineRunner {
 	//de esta forma estamos utilizando la dependencia inyectada dentro de otro objeto y otra clase.
 	@Override
 	public void run(String... args) throws Exception {
+		/*Se llama a este metodo base que contiene la implementación de todos los ejemplos vistos hasta el video 19
+		* del curso fundamentos de springboot*/
+		//ejemplosAnteriores();
 
+		//Estos siguientes utilizan la instancia de userRepository
+		saveUserAtDataBase(); //Este usa la config de dataSource/h2 como db emebeida
+		getInfoFromJpqlReference(); //Este usa una implementación JPQL
+
+
+	}
+
+	public void ejemplosAnteriores(){
 		try {
 			/*Cuando ya tienes inyectada la dependencia, lo que haces para la ejecución es llamar a su implementación*/
 			componentDependency.saludar();
@@ -60,9 +85,29 @@ public class FundamentosSpringApplication implements CommandLineRunner {
 			LOG.info("Se implementaron correctamente las dependencias");
 
 		} catch (Exception e){
-			LOG.error("La ejecución de alguna implementación fallo por " + e);
+			LOG.error("La ejecución de alguna implementación de ejemplo fallo por " + e);
 		}
+	}
 
+	/*Implementaciones de User ya con operaciones CRUD en la db H2 embebida*/
+	private void saveUserAtDataBase(){
+		User user1 = new User("juan", "juan@email.com", LocalDate.of(1991, 12, 21));
+		User user2 = new User("Janelo", "janelo@email.com", LocalDate.of(1991, 2, 22));
+		User user3 = new User("juliana", "julia@email.com", LocalDate.of(1981, 12, 23));
+		List<User> listaUsuarios = Arrays.asList(user1, user2, user3);
+		listaUsuarios.stream().forEach(userRepository::save);
+		System.out.println("Se crearon usuarios");
+	}
+
+	private void getInfoFromJpqlReference(){
+		LOG.info("Usuario por correo encontrado " +
+		userRepository.findByUserEmail("juan@email.com") //caso correcto
+						//userRepository.findByUserEmail("otrojuan@email.com") //caso incorrecto
+				.orElseThrow(()->new RuntimeException("No se encontro el usuario"))
+		);
+
+		userRepository.findAndSort("j", Sort.by("id").descending())
+				.stream().forEach(user -> LOG.info("Usuario obtenido por el sort " + user));
 	}
 
 

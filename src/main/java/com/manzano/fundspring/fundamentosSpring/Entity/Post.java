@@ -1,6 +1,8 @@
 package com.manzano.fundspring.fundamentosSpring.Entity;
 
 import javax.persistence.*;
+
+import com.fasterxml.jackson.annotation.JsonBackReference;
 import com.manzano.fundspring.fundamentosSpring.Entity.User;
 
 @Entity
@@ -18,6 +20,8 @@ public class Post {
 
     //Definiremos la relación que otras tablas tengan con esta:
     @ManyToOne
+    @JoinColumn(name = "user_id")
+    @JsonBackReference
     private User User;
 
     public Post() {

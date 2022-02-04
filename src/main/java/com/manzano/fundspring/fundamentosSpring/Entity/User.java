@@ -10,7 +10,7 @@ import com.manzano.fundspring.fundamentosSpring.Entity.Post;
 
 
 @Entity
-@Table(name = "user")
+@Table(name = "users")
 public class User {
 
     //Definimos los atributos de la tabla que estamos mapeando
@@ -21,13 +21,14 @@ public class User {
 
     @Column(length = 50)
     private String name;
-    @Column(length = 50)
+    @Column(length = 50, nullable = false, unique = true)
     private String email;
-    //@Column(length = 50)
+
+    @Column(name = "birth_date")
     private LocalDate dateBirth;
 
     /*Así como mapeamos en Post ManyToOne, debemos mapear de vuelta el OneToMany de esta tabla hacia la de Post*/
-    @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, fetch = FetchType.EAGER)
+    @OneToMany(mappedBy = "User", cascade = CascadeType.ALL, fetch = FetchType.EAGER)
     @JsonManagedReference
     private List<Post> Post = new ArrayList<>();
 
@@ -38,6 +39,10 @@ public class User {
         this.name = name;
         this.email = email;
         this.dateBirth = dateBirth;
+    }
+
+    public long getId() {
+        return id;
     }
 
     public void setId(long id) {
@@ -76,9 +81,6 @@ public class User {
         Post = post;
     }
 
-    public long getId() {
-        return id;
-    }
 
     @Override
     public String toString() {
