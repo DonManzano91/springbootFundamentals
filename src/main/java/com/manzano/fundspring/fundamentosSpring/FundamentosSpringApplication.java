@@ -93,12 +93,15 @@ public class FundamentosSpringApplication implements CommandLineRunner {
 	private void saveUserAtDataBase(){
 		User user1 = new User("juan", "juan@email.com", LocalDate.of(1991, 12, 21));
 		User user2 = new User("Janelo", "janelo@email.com", LocalDate.of(1991, 2, 22));
-		User user3 = new User("juliana", "julia@email.com", LocalDate.of(1981, 12, 23));
-		List<User> listaUsuarios = Arrays.asList(user1, user2, user3);
+		User user3 = new User("juliana", "juliana@email.com", LocalDate.of(1981, 12, 23));
+		User user4 = new User("julio", "julio@email.com", LocalDate.of(1998, 11, 12));
+		User user5 = new User("julia", "julia@email.com", LocalDate.of(2000, 01, 9));
+		List<User> listaUsuarios = Arrays.asList(user1, user2, user3, user4, user5);
 		listaUsuarios.stream().forEach(userRepository::save);
 		System.out.println("Se crearon usuarios");
 	}
 
+	/*En este metodo vamos consultando la información instanciada en saveUserAtDataBase() */
 	private void getInfoFromJpqlReference(){
 		LOG.info("Usuario por correo encontrado " +
 		userRepository.findByUserEmail("juan@email.com") //caso correcto
@@ -108,7 +111,39 @@ public class FundamentosSpringApplication implements CommandLineRunner {
 
 		userRepository.findAndSort("j", Sort.by("id").descending())
 				.stream().forEach(user -> LOG.info("Usuario obtenido por el sort " + user));
+
+		userRepository.findByName("juan")
+				.stream()
+				.forEach(user -> LOG.info("Usuarios con el nombre juan: " + user.toString()));
+
+		LOG.info("Query Method email y nombre: " +
+				userRepository.findByEmailAndName("juan@email.com", "juan")
+						.orElseThrow(() -> new RuntimeException("Usuario no encontrado"))
+				);
+
+		userRepository.findByNameLike("%jul%").stream()
+				.forEach(user -> LOG.info("Usuarios empiezan con J: " + user));
+
+		userRepository.findByNameOrEmail(null, "juan@email.com").stream()
+				.forEach(user -> LOG.info("Encuentra por nombre o correo " + user));
+
+		userRepository.findByDateBirthBetween(LocalDate.of(1990,01,01),
+				LocalDate.of(1995,01,01)).stream()
+				.forEach(user -> LOG.info("Encontrados por fecha" + user));
+
+		userRepository.findByNameLikeOrderByIdDesc("J").stream()
+				.forEach(user -> LOG.info("Empiezan con J ordenados por id: " + user));
+
+		userRepository.findByNameContainingOrderByIdDesc("juliana").stream()
+				.forEach(user -> LOG.info("Contiene nombre ordenado por ID" + user));
+
+		userRepository.getAllByBirthDateAndEmail(LocalDate.of(1990, 02, 2),
+				"janelo@email.com").stream().forEach(userDto -> LOG.info(
+						"Usamos JPQL, video 24" + userDto));
+
+
 	}
+
 
 
 
