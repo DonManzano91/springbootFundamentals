@@ -7,6 +7,7 @@ import com.manzano.fundspring.fundamentosSpring.Component.ComponentDependency;
 import com.manzano.fundspring.fundamentosSpring.Entity.User;
 import com.manzano.fundspring.fundamentosSpring.Pojos.UserPojo;
 import com.manzano.fundspring.fundamentosSpring.Repository.UserRepository;
+import com.manzano.fundspring.fundamentosSpring.Service.UserService;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.springframework.beans.factory.annotation.Qualifier;
@@ -31,6 +32,7 @@ public class FundamentosSpringApplication implements CommandLineRunner {
 	private MyBeanWithDependency myBeanWithDependency;
 	private MyBeanWithProperties myBeanWithProperties;
 	private UserPojo userPojo;
+	private UserService userService;
 
 	/*Se inyecta el repositorio como dependencia para poder hacer uso del comportamiento db y darle persistencia a la
 	* info de tipo User*/
@@ -44,13 +46,15 @@ public class FundamentosSpringApplication implements CommandLineRunner {
 										MyBeanWithDependency myBeanWithDependency,
 										MyBeanWithProperties myBeanWithProperties,
 										UserPojo userPojo,
-										UserRepository userRepository) {
+										UserRepository userRepository,
+										UserService userService) {
 		this.componentDependency = componentDependency;
 		this.myBean = myBean; //Se pasa la dependencia como parte del constructor para que se instancie el momento
 		this.myBeanWithDependency = myBeanWithDependency;
 		this.myBeanWithProperties = myBeanWithProperties;
 		this.userPojo = userPojo;
 		this.userRepository = userRepository;
+		this.userService = userService;
 
 	}
 
@@ -71,7 +75,31 @@ public class FundamentosSpringApplication implements CommandLineRunner {
 		saveUserAtDataBase(); //Este usa la config de dataSource/h2 como db emebeida
 		getInfoFromJpqlReference(); //Este usa una implementación JPQL
 
+		/*Como utilizamos la referencia de userRepository para el getAll dentro de la transacción aqui ejecutada
+		Se añadio completas ambas listas, y por eso las carga todas de golpe, aunque no hayan sido ejecutas juntas,
+		por que se trabaja sobre la persistencia, no sobre un objeto particular.
+		 */
+		saveWithErrorTransactional();
 
+
+	}
+
+	public void saveWithErrorTransactional(){
+		User user1 = new User("Alex", "alex@email.com", LocalDate.of(1991, 3, 21));
+		User user2 = new User("Marce", "marce@email.com", LocalDate.of(1966, 4, 25));
+		User user3 = new User("Ricardo", "ricardo@email.com", LocalDate.of(1994, 9, 18));
+		User user4 = new User("Luz", "luz@email.com", LocalDate.of(1998, 11, 12));
+		User user5 = new User("Shanti", "shanti@email.com", LocalDate.of(2000, 1, 9));
+		List<User> listaUsuarios2 = Arrays.asList(user1, user2, user3, user4, user5);
+
+		try {
+			userService.saveTransaction(listaUsuarios2);
+		} catch (Exception e){
+			LOG.error("Se pudrio por la exception: " + e);
+		}
+
+		userService.getAll().stream()
+				.forEach(user -> LOG.info("Usuario a guardar con transacción " + user));
 	}
 
 	public void ejemplosAnteriores(){
@@ -129,17 +157,17 @@ public class FundamentosSpringApplication implements CommandLineRunner {
 
 		userRepository.findByDateBirthBetween(LocalDate.of(1990,01,01),
 				LocalDate.of(1995,01,01)).stream()
-				.forEach(user -> LOG.info("Encontrados por fecha" + user));
+				.forEach(user -> LOG.info("Encontrados por fecha " + user));
 
 		userRepository.findByNameLikeOrderByIdDesc("J").stream()
 				.forEach(user -> LOG.info("Empiezan con J ordenados por id: " + user));
 
 		userRepository.findByNameContainingOrderByIdDesc("juliana").stream()
-				.forEach(user -> LOG.info("Contiene nombre ordenado por ID" + user));
+				.forEach(user -> LOG.info("Contiene nombre ordenado por ID " + user));
 
-		userRepository.getAllByBirthDateAndEmail(LocalDate.of(1990, 02, 2),
+		userRepository.getAllByBirthDateAndEmail(LocalDate.of(1991, 02, 22),
 				"janelo@email.com").stream().forEach(userDto -> LOG.info(
-						"Usamos JPQL, video 24" + userDto));
+						"Usamos JPQL, video 24 " + userDto));
 
 
 	}

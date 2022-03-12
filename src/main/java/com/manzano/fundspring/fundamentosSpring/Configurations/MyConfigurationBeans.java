@@ -9,7 +9,7 @@ import org.springframework.context.annotation.Configuration;
 @Configuration
 public class MyConfigurationBeans {
 
-    /*Aqui definimos como al acudir a una instancia de la interface, esta nos regresa una instnacia de la
+    /*Aqui definimos como al acudir a una instancia de la interface, esta nos regresa una instancia de la
     * implementación, y aqui se puede configurar a cual queremos acudir*/
     @Bean
     public MyBean beanOperation(){

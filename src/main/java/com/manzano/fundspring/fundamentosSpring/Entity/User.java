@@ -41,6 +41,10 @@ public class User {
         this.dateBirth = dateBirth;
     }
 
+    public User(Long id) {
+        this.id = id;
+    }
+
     public long getId() {
         return id;
     }
